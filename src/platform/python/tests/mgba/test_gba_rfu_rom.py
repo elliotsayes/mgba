@@ -10,8 +10,21 @@ from . import demo_rom
 
 
 ROM_PATH = Path(__file__).resolve().parents[5] / "fixtures" / "LinkRawWireless_demo.gba"
-SIODATA32_LO_REG = 0x90
-SIODATA32_HI_REG = 0x91
+EXPECTED_TILEMAP_TEXT = """state = AUTHENTICATED     p0
+LinkRawWireless_demo
+  (v8.0.3)
+START: reset wireless adapter
+RIGHT: restore from multiboot
+A: send command
+B: toggle log level
+UP/DOWN: scroll up/down
+L/R: scroll page up/down
+UP+L/DOWN+R: scroll to top/botto
+SELECT: clear
+---
+! setting log level to NORMAL
+> resetting adapter...
+< success :)"""
 
 
 @pytest.fixture(autouse=True)
@@ -64,26 +77,13 @@ def test_rfu_with_raw_wireless_demo_receives_data():
     for i in range(10_000):
         core.run_frame()
 
-    framebuffer = demo_rom.capture_latest_frame(core)
-    screenshot_path = demo_rom.save_screenshot_png(framebuffer)
-    print(f"Screenshot saved to {screenshot_path}")
-    keep_screenshot = demo_rom.preview_requested()
-    try:
-        demo_rom.preview_png(screenshot_path)
-        screen_text = demo_rom.ocr_text_from_png(screenshot_path, framebuffer=framebuffer)
-        if not screen_text:
-            keep_screenshot = True
-    finally:
-        if screenshot_path.exists() and not keep_screenshot:
-            screenshot_path.unlink()
-
-    print("OCR text:\n{}".format(screen_text))
-    if keep_screenshot:
-        print("Screenshot kept at {}".format(screenshot_path))
-    assert screen_text, "OCR returned no text from screenshot: {}".format(screenshot_path)
-
-    assert demo_rom.has_fuzzy_word(screen_text, "authenticated")
-    assert demo_rom.has_fuzzy_word(screen_text, "success")
+    tilemap_lines = demo_rom.extract_gba_bg0_text_lines(core)
+    screen_text = "\n".join(line for _, line in tilemap_lines)
+    print("Tilemap text:\n{}".format(screen_text))
+    assert screen_text == EXPECTED_TILEMAP_TEXT
+    assert int(rfu._native.startCount) >= 5
+    assert int(rfu._native.finishCount) >= 5
+    assert int(rfu._native.comState) == lib.GBASIO_RFU_COM_WAIT_CMD
 
     print("detaching RFU")
     core.detach_sio()
