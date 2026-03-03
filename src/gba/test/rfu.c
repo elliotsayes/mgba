@@ -14,6 +14,28 @@
 #include <mgba/internal/gba/sio/rfu.h>
 #include <mgba-util/audio-buffer.h>
 
+static const uint32_t sLoginPackets[] = {
+	0xFFFF494E,
+	0xFFFF494E,
+	0xB6B1494E,
+	0xB6B1544E,
+	0xABB1544E,
+	0xABB14E45,
+	0xB1BA4E45,
+	0xB1BA4F44,
+	0xB0BB4F44,
+	0xB0BB8001,
+};
+
+static uint32_t _rfuTransfer32(struct GBA* gba, struct GBASIORFUDriver* rfu, uint32_t txValue) {
+	gba->memory.io[GBA_REG(SIODATA32_LO)] = txValue & 0xFFFF;
+	gba->memory.io[GBA_REG(SIODATA32_HI)] = txValue >> 16;
+	GBASIOWriteSIOCNT(&gba->sio, 0x1083);
+	uint32_t rxValue = rfu->d.finishNormal32(&rfu->d);
+	GBASIONormal32FinishTransfer(&gba->sio, rxValue, 0);
+	return rxValue;
+}
+
 M_TEST_DEFINE(driverScaffoldTransfer) {
 	struct mCore* core = GBACoreCreate();
 	assert_non_null(core);
@@ -40,17 +62,28 @@ M_TEST_DEFINE(driverScaffoldTransfer) {
 	assert_true(rfu.d.handlesMode(&rfu.d, GBA_SIO_NORMAL_32));
 	assert_int_equal(rfu.d.connectedDevices(&rfu.d), 1);
 
-	gba->memory.io[GBA_REG(SIODATA32_LO)] = 0x1234;
-	gba->memory.io[GBA_REG(SIODATA32_HI)] = 0xABCD;
-	GBASIOWriteSIOCNT(&gba->sio, 0x1083);
-	assert_int_equal(rfu.writeCount, 2);
-	assert_int_equal(rfu.startCount, 1);
+	for (size_t i = 0; i < sizeof(sLoginPackets) / sizeof(sLoginPackets[0]); ++i) {
+		uint32_t data = _rfuTransfer32(gba, &rfu, sLoginPackets[i]);
+		if (i == 0) {
+			assert_int_equal(data, 0);
+		}
+	}
+	assert_int_equal(rfu.comState, GBASIO_RFU_COM_WAIT_CMD);
 
-	uint32_t data = rfu.d.finishNormal32(&rfu.d);
-	GBASIONormal32FinishTransfer(&gba->sio, data, 0);
-	assert_true(rfu.finishCount >= 1);
-	assert_int_equal(gba->memory.io[GBA_REG(SIODATA32_LO)], 0x1234);
-	assert_int_equal(gba->memory.io[GBA_REG(SIODATA32_HI)], 0xABCD);
+	uint32_t data = _rfuTransfer32(gba, &rfu, 0x99660010);
+	assert_int_equal(data, 0x80000000);
+	data = _rfuTransfer32(gba, &rfu, 0x80000000);
+	assert_int_equal(data, 0x99660090);
+
+	data = _rfuTransfer32(gba, &rfu, 0x99660013);
+	assert_int_equal(data, 0x80000000);
+	data = _rfuTransfer32(gba, &rfu, 0x80000000);
+	assert_int_equal(data, 0x99660193);
+	data = _rfuTransfer32(gba, &rfu, 0x80000000);
+	assert_int_equal(data >> 24, 0);
+	assert_int_equal(data & 0xFFFF, 1);
+	assert_true(rfu.startCount >= 10);
+	assert_true(rfu.finishCount >= 10);
 
 	GBASIORFUDriverDisconnect(&rfu);
 	assert_false(GBASIORFUDriverIsConnected(&rfu));
@@ -58,16 +91,8 @@ M_TEST_DEFINE(driverScaffoldTransfer) {
 	assert_true(rfu.d.handlesMode(&rfu.d, GBA_SIO_NORMAL_32));
 	assert_int_equal(rfu.d.connectedDevices(&rfu.d), 0);
 
-	gba->memory.io[GBA_REG(SIODATA32_LO)] = 0xFFFF;
-	gba->memory.io[GBA_REG(SIODATA32_HI)] = 0xFFFF;
-	GBASIOWriteSIOCNT(&gba->sio, 0x1083);
-	data = rfu.d.finishNormal32(&rfu.d);
-	GBASIONormal32FinishTransfer(&gba->sio, data, 0);
+	data = _rfuTransfer32(gba, &rfu, 0xFFFFFFFF);
 	assert_int_equal(data, 0);
-	assert_int_equal(gba->memory.io[GBA_REG(SIODATA32_LO)], 0);
-	assert_int_equal(gba->memory.io[GBA_REG(SIODATA32_HI)], 0);
-	assert_int_equal(rfu.startCount, 2);
-	assert_true(rfu.finishCount >= 2);
 
 	mCoreConfigDeinit(&core->config);
 	core->deinit(core);
@@ -106,15 +131,17 @@ M_TEST_DEFINE(rawWirelessDemoSmoke) {
 
 	GBASIOWriteRCNT(&gba->sio, 0);
 	GBASIOWriteSIOCNT(&gba->sio, 0x1000);
-	gba->memory.io[GBA_REG(SIODATA32_LO)] = 0xBEEF;
-	gba->memory.io[GBA_REG(SIODATA32_HI)] = 0xCAFE;
-	GBASIOWriteSIOCNT(&gba->sio, 0x1083);
-	uint32_t data = rfu.d.finishNormal32(&rfu.d);
-	GBASIONormal32FinishTransfer(&gba->sio, data, 0);
+	uint32_t data = 0;
+	for (size_t i = 0; i < sizeof(sLoginPackets) / sizeof(sLoginPackets[0]); ++i) {
+		data = _rfuTransfer32(gba, &rfu, sLoginPackets[i]);
+	}
+	assert_int_equal(rfu.comState, GBASIO_RFU_COM_WAIT_CMD);
+	data = _rfuTransfer32(gba, &rfu, 0x99660010);
+	assert_int_equal(data, 0x80000000);
+	data = _rfuTransfer32(gba, &rfu, 0x80000000);
+	assert_int_equal(data, 0x99660090);
 	assert_true(rfu.startCount >= 1);
 	assert_true(rfu.finishCount >= 1);
-	assert_int_equal(gba->memory.io[GBA_REG(SIODATA32_LO)], 0xBEEF);
-	assert_int_equal(gba->memory.io[GBA_REG(SIODATA32_HI)], 0xCAFE);
 
 	GBASIORFUDriverDisconnect(&rfu);
 	data = rfu.d.finishNormal32(&rfu.d);

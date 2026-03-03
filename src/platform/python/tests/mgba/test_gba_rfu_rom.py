@@ -81,26 +81,9 @@ def test_rfu_with_raw_wireless_demo_receives_data():
     if keep_screenshot:
         print("Screenshot kept at {}".format(screenshot_path))
     assert screen_text, "OCR returned no text from screenshot: {}".format(screenshot_path)
-    demo_rom.assert_screen_keywords(screen_text)
-    assert not demo_rom.has_fuzzy_word(screen_text, "failure")
 
-    # print("pressing A button")
-    # core.set_keys(gba.GBA.KEY_A)
-    # for i in range(100):
-    #     core.run_frame()
-
-    # print("running for 10,000 frames")
-    # for i in range(10_000):
-    #     core.run_frame()
-
-    # print("press A button again")
-    # core.set_keys(gba.GBA.KEY_A)
-    # for i in range(100):
-    #     core.run_frame()
-
-    # print("running for 10,000 frames")
-    # for i in range(10_000):
-    #     core.run_frame()
+    assert demo_rom.has_fuzzy_word(screen_text, "authenticated")
+    assert demo_rom.has_fuzzy_word(screen_text, "success")
 
     print("detaching RFU")
     core.detach_sio()
