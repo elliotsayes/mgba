@@ -37,7 +37,8 @@ set(SOURCE_FILES
 
 set(SIO_FILES
 	sio/dolphin.c
-	sio/lockstep.c)
+	sio/lockstep.c
+	sio/rfu.c)
 
 set(EXTRA_FILES
 	extra/battlechip.c
@@ -48,7 +49,8 @@ set(DEBUGGER_FILES
 
 set(TEST_FILES
 	test/cheats.c
-	test/core.c)
+	test/core.c
+	test/rfu.c)
 
 source_group("GBA board" FILES ${SOURCE_FILES})
 source_group("GBA extras" FILES ${EXTRA_FILES} ${SIO_FILES})

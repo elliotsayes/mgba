@@ -36,7 +36,7 @@ class GBA(Core):
         self.sprites = GBAObjs(self)
         self.cpu = ARMCore(self._core.cpu)
         self.memory = None
-        self._sio = set()
+        self._sio = None
 
     @needs_reset
     def _init_cache(self, cache):
@@ -51,6 +51,39 @@ class GBA(Core):
     def _load(self):
         super(GBA, self)._load()
         self.memory = GBAMemory(self._core, self._native.memory.romSize)
+
+    def attach_sio(self, link):
+        if self._sio is link:
+            return
+        self.detach_sio()
+        self._sio = link
+        self._core.setPeripheral(self._core, lib.mPERIPH_GBA_LINK_PORT, ffi.cast("struct GBASIODriver*", link._native))
+
+    def detach_sio(self):
+        if not self._sio:
+            return
+        self._core.setPeripheral(self._core, lib.mPERIPH_GBA_LINK_PORT, ffi.NULL)
+        self._sio = None
+
+    def __del__(self):
+        if self._sio:
+            self._core.setPeripheral(self._core, lib.mPERIPH_GBA_LINK_PORT, ffi.NULL)
+            self._sio = None
+
+
+class RFUDriver(object):
+    def __init__(self):
+        self._native = ffi.new("struct GBASIORFUDriver*")
+        lib.GBASIORFUDriverCreate(self._native)
+
+    def connect(self):
+        return bool(lib.GBASIORFUDriverConnect(self._native))
+
+    def disconnect(self):
+        lib.GBASIORFUDriverDisconnect(self._native)
+
+    def is_connected(self):
+        return bool(lib.GBASIORFUDriverIsConnected(self._native))
 
 
 class GBAMemory(Memory):

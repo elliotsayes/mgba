@@ -36,6 +36,7 @@ ffi.set_source("mgba._pylib", """
 #include <mgba/internal/gba/gba.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba/internal/gba/renderers/cache-set.h>
+#include <mgba/internal/gba/sio/rfu.h>
 #include <mgba/internal/sm83/sm83.h>
 #include <mgba/internal/gb/gb.h>
 #include <mgba/internal/gb/renderers/cache-set.h>

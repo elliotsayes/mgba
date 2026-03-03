@@ -58,6 +58,7 @@ void free(void*);
 #include <mgba/internal/gba/gba.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba/internal/gba/renderers/cache-set.h>
+#include <mgba/internal/gba/sio/rfu.h>
 #endif
 #ifdef M_CORE_GB
 #include <mgba/internal/sm83/sm83.h>
