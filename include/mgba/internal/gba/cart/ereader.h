@@ -79,6 +79,7 @@ struct GBACartEReader {
 	struct EReaderCard cards[EREADER_CARDS_MAX];
 };
 
+#ifndef PYCPARSE
 struct EReaderAnchor;
 struct EReaderBlock;
 DECLARE_VECTOR(EReaderAnchorList, struct EReaderAnchor);
@@ -121,6 +122,7 @@ void EReaderScanCreateBlocks(struct EReaderScan*);
 void EReaderScanDetectBlockThreshold(struct EReaderScan*, int block);
 bool EReaderScanRecalibrateBlock(struct EReaderScan*, int block);
 bool EReaderScanScanBlock(struct EReaderScan*, int block, bool strict);
+#endif
 
 CXX_GUARD_END
 
