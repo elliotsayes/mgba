@@ -204,6 +204,7 @@ set(UI_FILES
 	PrinterView.ui
 	ReportView.ui
 	ROMInfo.ui
+	RFUView.ui
 	SaveConverter.ui
 	SensorView.ui
 	SettingsView.ui
@@ -217,6 +218,7 @@ set(GBA_SRC
 	BattleChipUpdater.cpp
 	BattleChipView.cpp
 	DolphinConnector.cpp
+	RFUView.cpp
 	GBAOverride.cpp)
 
 set(GB_SRC

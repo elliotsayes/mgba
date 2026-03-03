@@ -48,6 +48,7 @@ CoreController::CoreController(mCore* core, QObject* parent)
 
 #ifdef M_CORE_GBA
 	GBASIODolphinCreate(&m_dolphin);
+	GBASIORFUDriverCreate(&m_rfu);
 #endif
 
 #ifdef ENABLE_DEBUGGERS
@@ -133,6 +134,7 @@ CoreController::CoreController(mCore* core, QObject* parent)
 		controller->clearMultiplayerController();
 #ifdef M_CORE_GBA
 		controller->detachDolphin();
+		controller->detachRFU();
 #endif
 		QMetaObject::invokeMethod(controller, "stopping");
 	};
@@ -438,6 +440,26 @@ void CoreController::detachDolphin() {
 		m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, NULL);
 	}
 	GBASIODolphinDestroy(&m_dolphin);
+}
+
+bool CoreController::attachRFU() {
+	if (platform() != mPLATFORM_GBA) {
+		return false;
+	}
+	if (GBASIORFUDriverConnect(&m_rfu)) {
+		clearMultiplayerController();
+		m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, &m_rfu.d);
+		return true;
+	}
+	return false;
+}
+
+void CoreController::detachRFU() {
+	if (platform() == mPLATFORM_GBA) {
+		// TODO: Reattach to multiplayer controller
+		m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, NULL);
+	}
+	GBASIORFUDriverDisconnect(&m_rfu);
 }
 #endif
 

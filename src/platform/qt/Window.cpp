@@ -58,6 +58,7 @@
 #include "PrinterView.h"
 #include "ReportView.h"
 #include "ROMInfo.h"
+#include "RFUView.h"
 #include "SaveConverter.h"
 #ifdef ENABLE_SCRIPTING
 #include "scripting/ScriptingView.h"
@@ -1446,6 +1447,9 @@ void Window::setupMenu(QMenuBar* menubar) {
 #ifdef M_CORE_GBA
 	auto dolphin = m_actions.addAction(tr("Connect to Dolphin..."), "connectDolphin", openNamedTView<DolphinConnector>(&m_dolphinView, true, this), "file");
 	m_platformActions.insert(mPLATFORM_GBA, dolphin);
+
+	auto rfu = m_actions.addAction(tr("RFU adapter..."), "rfuAdapter", openNamedTView<RFUView>(&m_rfuView, true, this), "file");
+	m_platformActions.insert(mPLATFORM_GBA, rfu);
 #endif
 
 	m_actions.addSeparator("file");

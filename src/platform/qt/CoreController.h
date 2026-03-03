@@ -27,6 +27,7 @@
 #endif
 #ifdef M_CORE_GBA
 #include <mgba/internal/gba/sio/dolphin.h>
+#include <mgba/internal/gba/sio/rfu.h>
 #endif
 
 #ifdef M_CORE_GBA
@@ -124,6 +125,7 @@ public:
 
 #ifdef M_CORE_GBA
 	bool isDolphinConnected() const { return !SOCKET_FAILED(m_dolphin.data); }
+	bool isRFUConnected() const { return GBASIORFUDriverIsConnected(&m_rfu); }
 #endif
 
 	mCacheSet* graphicCaches();
@@ -208,6 +210,9 @@ public slots:
 
 	bool attachDolphin(const Address& address);
 	void detachDolphin();
+
+	bool attachRFU();
+	void detachRFU();
 #endif
 
 	void setAVStream(mAVStream*);
@@ -330,6 +335,7 @@ private:
 	MultiplayerController* m_multiplayer = nullptr;
 #ifdef M_CORE_GBA
 	GBASIODolphin m_dolphin;
+	GBASIORFUDriver m_rfu;
 #endif
 
 #ifdef ENABLE_DEBUGGERS

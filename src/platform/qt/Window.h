@@ -42,6 +42,7 @@ class GIFView;
 class LibraryController;
 class LogView;
 class OverrideView;
+class RFUView;
 class SensorView;
 class ShaderSelector;
 class ShortcutController;
@@ -253,6 +254,7 @@ private:
 	QPointer<OverrideView> m_overrideView;
 	QPointer<SensorView> m_sensorView;
 	QPointer<DolphinConnector> m_dolphinView;
+	QPointer<RFUView> m_rfuView;
 	QPointer<FrameView> m_frameView;
 
 #ifdef USE_FFMPEG
