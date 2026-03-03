@@ -30,7 +30,7 @@ class Logger(object):
 
     def __init__(self):
         self._handle = ffi.new_handle(self)
-        self._native = ffi.gc(lib.mLoggerPythonCreate(self._handle), lib.free)
+        self._native = ffi.gc(lib.mLoggerPythonCreate(self._handle), lib.mLoggerPythonDestroy)
 
     @staticmethod
     def category_name(category):
@@ -43,6 +43,17 @@ class Logger(object):
 
     def log(self, category, level, message):
         print("{}: {}".format(self.category_name(category), message))
+
+    def set_default_levels(self, levels):
+        lib.mLoggerPythonFilterCreate(self._native, levels)
+
+    def set_category_levels(self, category, levels):
+        if isinstance(category, str):
+            category = category.encode("UTF-8")
+        lib.mLoggerPythonFilterSet(self._native, category, levels)
+
+    def clear_filter(self):
+        lib.mLoggerPythonFilterClear(self._native)
 
 
 class NullLogger(Logger):

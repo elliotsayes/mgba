@@ -13,5 +13,12 @@ struct mLoggerPy {
 };
 
 struct mLogger* mLoggerPythonCreate(void* pyobj);
+void mLoggerPythonDestroy(struct mLogger* logger);
+void mLoggerPythonFilterCreate(struct mLogger* logger, int defaultLevels);
+void mLoggerPythonFilterSet(struct mLogger* logger, const char* category, int levels);
+void mLoggerPythonFilterClear(struct mLogger* logger);
+void mLoggerPythonUseStdLogger(int defaultLevels);
+void mLoggerPythonStdFilterSet(const char* category, int levels);
+void mLoggerPythonClearStdLogger(void);
 
 PYEXPORT void _pyLog(void* logger, int category, enum mLogLevel level, const char* message);
